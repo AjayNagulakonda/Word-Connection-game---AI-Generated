@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Connection Game</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const Sparkles = () => (
+            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+        );
+
+        const Trophy = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+            </svg>
+        );
+
+        const ArrowRight = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+        );
+
+        const RotateCcw = ({ className }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+            </svg>
+        );
+
+        const WordConnectionGame = () => {
+            const levels = [
+                {
+                    difficulty: 'Easy',
+                    pairs: [
+                        { words: ['Coffee', 'Bean'], connection: 'coffee bean' },
+                        { words: ['Sun', 'Shine'], connection: 'sunshine' },
+                        { words: ['Rain', 'Bow'], connection: 'rainbow' },
+                        { words: ['Fire', 'Place'], connection: 'fireplace' }
+                    ]
+                },
+                {
+                    difficulty: 'Medium',
+                    pairs: [
+                        { words: ['Water', 'Fall'], connection: 'waterfall' },
+                        { words: ['Basket', 'Ball'], connection: 'basketball' },
+                        { words: ['Tooth', 'Paste'], connection: 'toothpaste' },
+                        { words: ['Bed', 'Room'], connection: 'bedroom' }
+                    ]
+                },
+                {
+                    difficulty: 'Hard',
+                    pairs: [
+                        { words: ['Time', 'Table'], connection: 'timetable' },
+                        { words: ['Under', 'Ground'], connection: 'underground' },
+                        { words: ['Over', 'Look'], connection: 'overlook' },
+                        { words: ['Back', 'Pack'], connection: 'backpack' }
+                    ]
+                },
+                {
+                    difficulty: 'Expert',
+                    pairs: [
+                        { words: ['Break', 'Through'], connection: 'breakthrough' },
+                        { words: ['Under', 'Stand'], connection: 'understand' },
+                        { words: ['Over', 'Come'], connection: 'overcome' },
+                        { words: ['With', 'Draw'], connection: 'withdraw' }
+                    ]
+                }
+            ];
+
+            const [currentLevel, setCurrentLevel] = useState(0);
+            const [currentPair, setCurrentPair] = useState(0);
+            const [selectedWords, setSelectedWords] = useState([]);
+            const [score, setScore] = useState(0);
+            const [message, setMessage] = useState('');
+            const [gameState, setGameState] = useState('playing');
+            const [allWords, setAllWords] = useState([]);
+
+            useEffect(() => {
+                shuffleWords();
+            }, [currentLevel, currentPair]);
+
+            const shuffleWords = () => {
+                const level = levels[currentLevel];
+                const words = level.pairs.flatMap(p => p.words);
+                setAllWords(words.sort(() => Math.random() - 0.5));
+            };
+
+            const handleWordClick = (word) => {
+                if (selectedWords.includes(word)) {
+                    setSelectedWords(selectedWords.filter(w => w !== word));
+                    return;
+                }
+
+                const newSelected = [...selectedWords, word];
+                setSelectedWords(newSelected);
+
+                if (newSelected.length === 2) {
+                    checkConnection(newSelected);
+                }
+            };
+
+            const checkConnection = (words) => {
+                const level = levels[currentLevel];
+                const correctPair = level.pairs.find(p => 
+                    p.words.every(w => words.includes(w))
+                );
+
+                setTimeout(() => {
+                    if (correctPair) {
+                        setScore(score + 10);
+                        setMessage(`✓ Correct! ${correctPair.connection}`);
+                        
+                        const remainingPairs = level.pairs.filter(p => 
+                            !p.words.every(w => selectedWords.includes(w) || words.includes(w))
+                        );
+
+                        if (remainingPairs.length === 0) {
+                            if (currentLevel < levels.length - 1) {
+                                setTimeout(() => {
+                                    setCurrentLevel(currentLevel + 1);
+                                    setCurrentPair(0);
+                                    setSelectedWords([]);
+                                    setMessage('');
+                                }, 1500);
+                            } else {
+                                setGameState('won');
+                            }
+                        } else {
+                            const newAllWords = allWords.filter(w => !words.includes(w));
+                            setAllWords(newAllWords);
+                        }
+                    } else {
+                        setMessage('✗ Not a match. Try again!');
+                        setScore(Math.max(0, score - 2));
+                    }
+                    setSelectedWords([]);
+                }, 300);
+            };
+
+            const resetGame = () => {
+                setCurrentLevel(0);
+                setCurrentPair(0);
+                setSelectedWords([]);
+                setScore(0);
+                setMessage('');
+                setGameState('playing');
+                shuffleWords();
+            };
+
+            if (gameState === 'won') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center p-4">
+                        <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full text-center">
+                            <Trophy className="w-24 h-24 text-yellow-500 mx-auto mb-4" />
+                            <h1 className="text-4xl font-bold text-gray-800 mb-4">You Won!</h1>
+                            <p className="text-2xl text-gray-600 mb-6">Final Score: {score}</p>
+                            <button
+                                onClick={resetGame}
+                                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                            >
+                                Play Again
+                            </button>
+                        </div>
+                    </div>
+                );
+            }
+
+            const level = levels[currentLevel];
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 p-4">
+                    <div className="max-w-4xl mx-auto">
+                        <div className="bg-white rounded-2xl shadow-2xl p-6 mb-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <div className="flex items-center gap-2">
+                                    <Sparkles />
+                                    <h1 className="text-2xl font-bold text-gray-800">Word Connection</h1>
+                                </div>
+                                <div className="text-right">
+                                    <div className="text-sm text-gray-600">Score</div>
+                                    <div className="text-2xl font-bold text-purple-600">{score}</div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-2">
+                                    <span className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-semibold">
+                                        {level.difficulty}
+                                    </span>
+                                    <span className="text-gray-600">
+                                        Level {currentLevel + 1}/{levels.length}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={resetGame}
+                                    className="flex items-center gap-2 text-gray-600 hover:text-gray-800"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                    Reset
+                                </button>
+                            </div>
+
+                            <div className="mb-6">
+                                <p className="text-gray-700 text-center mb-4">
+                                    Connect two words that form a compound word or phrase!
+                                </p>
+                                {message && (
+                                    <div className={`text-center py-2 px-4 rounded-lg ${
+                                        message.includes('✓') 
+                                            ? 'bg-green-100 text-green-700' 
+                                            : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        {message}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {allWords.map((word, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => handleWordClick(word)}
+                                        className={`py-6 px-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105 ${
+                                            selectedWords.includes(word)
+                                                ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {word}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="mt-6 text-center text-sm text-gray-600">
+                                {selectedWords.length > 0 && (
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span className="font-semibold">{selectedWords[0]}</span>
+                                        {selectedWords.length === 2 && (
+                                            <>
+                                                <ArrowRight className="w-4 h-4" />
+                                                <span className="font-semibold">{selectedWords[1]}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="text-center text-white text-sm">
+                            <p>Match all word pairs to advance to the next level!</p>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<WordConnectionGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
